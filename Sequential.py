@@ -2,9 +2,13 @@ from RoleSymmetricGame import Profile, PayoffData, Game
 from BasicFunctions import flatten
 import Nash
 from numpy.linalg import norm
-from RandomGames import independent
 import Regret
 from scipy.stats.stats import sem
+import GameIO as IO
+import RandomGames
+from functools import partial
+from numpy.random import normal
+
 
 class ObservationMatrix:
     def __init__(self, payoff_data=[]):
@@ -35,23 +39,21 @@ class ObservationMatrix:
                         for profile, role_strategies in self.profile_dict.items()]
         return Game(g_roles, g_players, g_strategies, g_payoff_data)
 
-#    TODO: Rewrite to use Bryce's noise generation model
-#def sequential_normal_noise(ss_game, stdev, evaluator, sample_increment):
-#    """
-#    Creates an observation matrix sequentially with normal noise
-#    
-#    ss_game - a game to give the basic structure and base payoffs
-#    stdev - the standard deviation for use with normal noise generation
-#    evaluator - an object that can evaluate whether or not to continue sampling by inspecting game
-#    sample_increment - the number of samples to take in each step    
-#    """
-#    matrix = ObservationMatrix()
-#    while evaluator.continue_sampling(matrix):
-#        print evaluator.old_equilibria
-#        for profile in ss_game.knownProfiles():
-#            new_data = generate_normal_noise(ss_game, profile, stdev, sample_increment)
-#            matrix.addObservations(profile, new_data)
-#    return matrix
+def add_noise_sequentially(game, model, evaluator, samples_per_step):
+    """
+    Generate ObservationMatrix sequentially with random noise added to each payoff.
+    
+    game: a RSG.Game or RSG.SampleGame
+    model: a 2-parameter function that generates mean-zero noise
+    spread, samples_per_step: the parameters passed to the noise function
+    evaluator: the method used to determine when to stop sampling
+    """
+    matrix = ObservationMatrix()
+    while evaluator.continue_sampling(matrix):
+        for prof in game.knownProfiles():
+            matrix.addObservations(prof, {r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) + \
+                model(samples_per_step)) for s in prof[r]] for r in game.roles})
+    return matrix
 
 class StandardErrorEvaluator:
     def __init__(self, standard_err_threshold, target_set):
@@ -59,6 +61,8 @@ class StandardErrorEvaluator:
         self.target_set = target_set
         
     def continue_sampling(self, matrix):
+        if matrix.profile_dict == {}:
+            return True
         for profile in self.target_set:
             for role, strategies in profile.items():
                 for strategy in strategies.keys():
@@ -78,6 +82,8 @@ class EquilibriumCompareEvaluator:
         self.old_equilibria = []
         
     def continue_sampling(self, matrix):
+        if matrix.profile_dict == {}:
+            return True
         game = matrix.toGame()
         decision = False
         equilibria = []
@@ -108,9 +114,17 @@ class EquilibriumCompareEvaluator:
 
 
 def main():
-    game = independent(4, 4)
-    sgame = sequential_normal_noise(game, 2.0, EquilibriumCompareEvaluator(0.001), 5)
+    # Make 1 LEG with normal noise using EquilibriumCompareEvaluator
+    base_game = RandomGames.local_effect(6, 4)
+    add_noise_sequentially(base_game, partial(normal, 0, 5.0), EquilibriumCompareEvaluator(0.001), 10)
+    f = open("leg_normal_eq")
+    f.write(IO.to_JSON_str(base_game))
     
+    # Make 1 LEG with normal noise using StandardErrorEvaluator
+    base_game = RandomGames.local_effect(6, 4)
+    add_noise_sequentially(base_game, partial(normal, 0, 5.0), StandardErrorEvaluator(0.5, base_game.knownProfiles()), 10)
+    f = open("leg_normal_stderr")
+    f.write(IO.to_JSON_str(base_game))
+
 if __name__ == "__main__":
     main()
-    

@@ -44,7 +44,11 @@ class describe_observation_matrix:
 class describe_equilibrium_compare_evaluator:
     Regret.regret = lambda game, profile: 0
     
-    def it_requests_further_sampling_when_there_are_no_old_equilibria(self):
+    def it_requests_further_sampling_when_given_an_empty_matrix(self):
+        evaluator = EquilibriumCompareEvaluator(0.01)
+        assert evaluator.continue_sampling(ObservationMatrix())
+    
+    def it_requests_further_sampling_when_there_is_data_but_no_old_equilibria(self):
         Nash.replicator_dynamics = lambda g, mix, iters, converge_threshold: array([0.1, 0.9])
         matrix = create_observation_matrix()
         evaluator = EquilibriumCompareEvaluator(0.01)
@@ -77,6 +81,12 @@ class describe_equilibrium_compare_evaluator:
             assert [[0.1, 0.9], [0.999, 0.001]].count(list(eq)) == 1
         
 class describe_standard_error_evaluator:
+    def it_requests_sampling_when_given_an_empty_observation_matrix(self):
+        matrix = ObservationMatrix()
+        target_profile = Profile({'All': {'A': 2}})
+        evaluator = StandardErrorEvaluator(1, [target_profile])
+        assert evaluator.continue_sampling(matrix) == True
+    
     def it_requests_sampling_when_profiles_in_target_set_have_too_much_variation_in_payoffs(self):
         matrix = ObservationMatrix()
         target_profile = Profile({'All': {'A': 2}})
