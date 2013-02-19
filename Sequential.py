@@ -1,4 +1,4 @@
-from RoleSymmetricGame import Profile, PayoffData, Game
+from RoleSymmetricGame import Profile, PayoffData, SampleGame
 from BasicFunctions import flatten
 import Nash
 from numpy.linalg import norm
@@ -37,7 +37,7 @@ class ObservationMatrix:
                         for strategy, observations in strategies.items()]
                         for role, strategies in role_strategies.items()} 
                         for profile, role_strategies in self.profile_dict.items()]
-        return Game(g_roles, g_players, g_strategies, g_payoff_data)
+        return SampleGame(g_roles, g_players, g_strategies, g_payoff_data)
 
 def add_noise_sequentially(game, model, evaluator, samples_per_step):
     """
@@ -116,15 +116,15 @@ class EquilibriumCompareEvaluator:
 def main():
     # Make 1 LEG with normal noise using EquilibriumCompareEvaluator
     base_game = RandomGames.local_effect(6, 4)
-    add_noise_sequentially(base_game, partial(normal, 0, 5.0), EquilibriumCompareEvaluator(0.001), 10)
+    matrix = add_noise_sequentially(base_game, partial(normal, 0, 5.0), EquilibriumCompareEvaluator(0.001), 10)
     f = open("leg_normal_eq", "w+")
-    f.write(IO.to_JSON_str(base_game))
+    f.write(IO.to_JSON_str(matrix.toGame()))
     
     # Make 1 LEG with normal noise using StandardErrorEvaluator
     base_game = RandomGames.local_effect(6, 4)
-    add_noise_sequentially(base_game, partial(normal, 0, 5.0), StandardErrorEvaluator(0.5, base_game.knownProfiles()), 10)
+    matrix = add_noise_sequentially(base_game, partial(normal, 0, 5.0), StandardErrorEvaluator(0.5, base_game.knownProfiles()), 10)
     f = open("leg_normal_stderr", "w+")
-    f.write(IO.to_JSON_str(base_game))
+    f.write(IO.to_JSON_str(matrix.toGame()))
 
 if __name__ == "__main__":
     main()
