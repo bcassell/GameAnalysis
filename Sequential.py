@@ -117,13 +117,13 @@ def main():
     # Make 1 LEG with normal noise using EquilibriumCompareEvaluator
     base_game = RandomGames.local_effect(6, 4)
     add_noise_sequentially(base_game, partial(normal, 0, 5.0), EquilibriumCompareEvaluator(0.001), 10)
-    f = open("leg_normal_eq")
+    f = open("leg_normal_eq", "w+")
     f.write(IO.to_JSON_str(base_game))
     
     # Make 1 LEG with normal noise using StandardErrorEvaluator
     base_game = RandomGames.local_effect(6, 4)
     add_noise_sequentially(base_game, partial(normal, 0, 5.0), StandardErrorEvaluator(0.5, base_game.knownProfiles()), 10)
-    f = open("leg_normal_stderr")
+    f = open("leg_normal_stderr", "w+")
     f.write(IO.to_JSON_str(base_game))
 
 if __name__ == "__main__":
