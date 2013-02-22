@@ -122,7 +122,7 @@ def main():
         print i
         base_game = RandomGames.local_effect(6, 4)
         for stdev in stdevs:
-            sample_game = add_noise_sequentially(base_game, partial(normal, 0, stdev),
+            sample_game = add_noise_sequentially(base_game, partial(RandomGames.gaussian_mixture_noise, stdev),
                                                  EquilibriumCompareEvaluator(0.001), 10).toGame()
             a_profile = sample_game.knownProfiles()[0]
             a_role = a_profile.asDict().keys()[0]
