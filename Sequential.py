@@ -6,6 +6,7 @@ import Regret
 from scipy.stats.stats import sem
 import GameIO as IO
 import RandomGames
+import Bootstrap
 from functools import partial
 from numpy.random import normal
 
@@ -114,17 +115,25 @@ class EquilibriumCompareEvaluator:
 
 
 def main():
-    # Make 1 LEG with normal noise using EquilibriumCompareEvaluator
-    base_game = RandomGames.local_effect(6, 4)
-    matrix = add_noise_sequentially(base_game, partial(normal, 0, 5.0), EquilibriumCompareEvaluator(0.001), 10)
-    f = open("leg_normal_eq", "w")
-    f.write(IO.to_JSON_str(matrix.toGame()))
-    
-    # Make 1 LEG with normal noise using StandardErrorEvaluator
-    base_game = RandomGames.local_effect(6, 4)
-    matrix = add_noise_sequentially(base_game, partial(normal, 0, 5.0), StandardErrorEvaluator(0.5, base_game.knownProfiles()), 10)
-    f = open("leg_normal_stderr", "w")
-    f.write(IO.to_JSON_str(matrix.toGame()))
+    num_games = 1000
+    stdevs = [0.2, 1.0, 5.0, 25.0]
+    results = [{s:{} for s in stdevs} for i in range(num_games)]
+    for i in range(num_games):
+        print i
+        base_game = RandomGames.local_effect(6, 4)
+        for stdev in stdevs:
+            sample_game = add_noise_sequentially(base_game, partial(normal, 0, stdev),
+                                                 EquilibriumCompareEvaluator(0.001), 10).toGame()
+            a_profile = sample_game.knownProfiles()[0]
+            a_role = a_profile.asDict().keys()[0]
+            a_strategy = a_profile.asDict()[a_role].keys()[0]
+            subsample_game = Bootstrap.subsample(sample_game, len(sample_game.getPayoffData(a_profile, a_role, a_strategy)))
+            equilibria = Nash.mixed_nash(subsample_game)
+            results[i][stdev][0] = [{"profile": eq, "statistic": Regret.regret(base_game, eq),
+                                  "bootstrap" : Bootstrap.bootstrap(subsample_game, eq, Regret.regret, "resample", ["profile"])
+                    } for eq in equilibria]
+    f = open('results.json', 'w')
+    f.write(IO.to_JSON_str(results, indent=None))
 
 if __name__ == "__main__":
     main()
