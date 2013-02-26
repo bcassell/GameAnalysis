@@ -9,7 +9,8 @@ import RandomGames
 import Bootstrap
 from functools import partial
 from numpy.random import normal
-
+import yaml
+from argparse import ArgumentParser
 
 class ObservationMatrix:
     def __init__(self, payoff_data=[]):
@@ -115,14 +116,17 @@ class EquilibriumCompareEvaluator:
 
 
 def main():
-    num_games = 1000
-    stdevs = [0.2, 1.0, 5.0, 25.0]
-    results = [{s:{} for s in stdevs} for i in range(num_games)]
-    for i in range(num_games):
+    parser = ArgumentParser(description='Sequential Bootstrap Experiments')
+    parser.add_argument('input_file', metavar='input_file', help='a yaml file specifying the required details')
+    parser.add_argument('output_file', metavar='output_file', help='output json suitable for use with the plotting script')
+    args = parser.parse_args()
+    input = yaml.safe_load(open(args.input_file))
+    results = [{s:{} for s in input['stdevs']} for i in range(input['num_games'])]
+    for i in range(input['num_games']):
         print i
         base_game = RandomGames.local_effect(6, 4)
-        for stdev in stdevs:
-            sample_game = add_noise_sequentially(base_game, partial(RandomGames.gaussian_mixture_noise, stdev),
+        for stdev in input['stdevs']:
+            sample_game = add_noise_sequentially(base_game, partial(normal, 0, stdev),
                                                  EquilibriumCompareEvaluator(0.001), 10).toGame()
             a_profile = sample_game.knownProfiles()[0]
             a_role = a_profile.asDict().keys()[0]
@@ -132,7 +136,7 @@ def main():
             results[i][stdev][0] = [{"profile": eq, "statistic": Regret.regret(base_game, eq),
                                   "bootstrap" : Bootstrap.bootstrap(subsample_game, eq, Regret.regret, "resample", ["profile"])
                     } for eq in equilibria]
-    f = open('results.json', 'w')
+    f = open(args.output_file, 'w')
     f.write(IO.to_JSON_str(results, indent=None))
 
 if __name__ == "__main__":
