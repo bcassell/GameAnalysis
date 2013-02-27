@@ -26,11 +26,8 @@ def parse_input():
 	and mode information.
 	"""
 	parser = ArgumentParser()
-	parser.add_argument("in_file", type=str, help="Input file or directory.")
-	parser.add_argument("out_file", type=str, help="Output file.")
-	parser.add_argument("-filter", type=str, default="", help= "If input is "+\
-						"a directory, then it gets filtered for files with"+\
-						"names contain this substring.")
+	parser.add_argument("in_file", type=str, help="Input file or files.", nargs='+')
+	parser.add_argument("-out_file", type=str, default='results.pdf', help="Output file.")
 	parser.add_argument("-bucket", type=float, default=.01, help="Fraction "+\
 						"of the data to include in each bucket.")
 	parser.add_argument("-mode", type=str, choices=["pct","dst","qq"], \
@@ -43,17 +40,14 @@ def parse_input():
 						"Optional maximum values for the chart's x and y-axes.")
 	args = parser.parse_args()
 
-	if os.path.isfile(args.in_file):
-		with open(args.in_file) as f:
-			return json.load(f), args
-	elif os.path.isdir(args.in_file):
-		names = filter(lambda fn: args.filter in fn, os.listdir(args.in_file))
-		files = map(open, [os.path.join(args.in_file, n) for n in names])
-		data = map(lambda f: f.read(), files)
-		map(lambda f: f.close(), files)
-		return map(json.loads, data), args
-	else:
-		raise IOError("Input must be a file or directory.")
+	data = []
+	for file in args.in_file:
+		if os.path.isfile(file):
+			with open(file) as f:
+				data.extend(json.load(f))
+		else:
+			raise IOError("Input must be a file or directory.")
+	return data, args
 
 
 def get_keys(data):
