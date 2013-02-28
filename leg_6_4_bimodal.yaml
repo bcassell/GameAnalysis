@@ -1,0 +1,5 @@
+num_games: 100
+stdevs:
+  - 1.0
+  - 5.0
+model: bimodal
