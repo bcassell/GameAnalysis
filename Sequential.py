@@ -8,8 +8,9 @@ import GameIO as IO
 import RandomGames
 import Bootstrap
 from functools import partial
-from numpy.random import normal
+from numpy.random import normal, beta
 import yaml
+from random import choice
 from argparse import ArgumentParser
 
 class ObservationMatrix:
@@ -41,13 +42,37 @@ class ObservationMatrix:
                         for profile, role_strategies in self.profile_dict.items()]
         return SampleGame(g_roles, g_players, g_strategies, g_payoff_data)
 
+def add_bimodal_noise_sequentially(game, max_stdev, evaluator, samples_per_step):
+    """
+    Generate ObservationMatrix sequentially with bimodal gaussian noise added to each payoff.
+    
+    game: a RSG.Game or RSG.SampleGame
+    samples_per_step: the parameters passed to the noise function
+    evaluator: the method used to determine when to stop sampling
+    """
+    matrix = ObservationMatrix()
+    
+    # Setup the info for each payoff
+    dist_info = {}
+    for prof in game.knownProfiles():
+        dist_info[prof] = {r: {s: {'offset': normal(0, max_stdev), 'stdev': beta(2,1) * max_stdev} 
+                               for s in prof[r]} for r in game.roles}
+    
+    print 'dist_info set'
+    while evaluator.continue_sampling(matrix):
+        for prof in game.knownProfiles():
+            matrix.addObservations(prof, {r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) +
+                [normal(choice([-1, 1])*dist_hash['offset'], dist_hash['stdev'])
+                 for _ in range(samples_per_step)]) for s, dist_hash in dist_info[prof][r].items()] for r in game.roles})
+    return matrix        
+
 def add_noise_sequentially(game, model, evaluator, samples_per_step):
     """
     Generate ObservationMatrix sequentially with random noise added to each payoff.
     
     game: a RSG.Game or RSG.SampleGame
     model: a 2-parameter function that generates mean-zero noise
-    spread, samples_per_step: the parameters passed to the noise function
+    samples_per_step: the parameters passed to the noise function
     evaluator: the method used to determine when to stop sampling
     """
     matrix = ObservationMatrix()
@@ -126,7 +151,10 @@ def main():
         print i
         base_game = RandomGames.local_effect(6, 4)
         for stdev in input['stdevs']:
-            sample_game = add_noise_sequentially(base_game, partial(normal, 0, stdev),
+            if input['model'] == 'bimodal':
+                sample_game = add_bimodal_noise_sequentially(base_game, stdev, EquilibriumCompareEvaluator(0.001), 10).toGame()
+            else:
+                sample_game = add_noise_sequentially(base_game, partial(normal, 0, stdev),
                                                  EquilibriumCompareEvaluator(0.001), 10).toGame()
             a_profile = sample_game.knownProfiles()[0]
             a_role = a_profile.asDict().keys()[0]
