@@ -88,6 +88,7 @@ class StandardErrorEvaluator:
         self.target_set = target_set
         
     def continue_sampling(self, matrix):
+        print 'more sampling'
         if matrix.profile_dict == {}:
             return True
         for profile in self.target_set:
@@ -152,17 +153,18 @@ def main():
         base_game = RandomGames.local_effect(6, 4)
         for stdev in input['stdevs']:
             if input['model'] == 'bimodal':
-                sample_game = add_bimodal_noise_sequentially(base_game, stdev, EquilibriumCompareEvaluator(0.001), 10).toGame()
+                sample_game = add_bimodal_noise_sequentially(base_game, stdev, StandardErrorEvaluator(5.0, base_game.knownProfiles()), 10).toGame()
             else:
                 sample_game = add_noise_sequentially(base_game, partial(normal, 0, stdev),
-                                                 EquilibriumCompareEvaluator(0.001), 10).toGame()
+                                                 StandardErrorEvaluator(5.0, base_game.knownProfiles()), 10).toGame()
             a_profile = sample_game.knownProfiles()[0]
             a_role = a_profile.asDict().keys()[0]
             a_strategy = a_profile.asDict()[a_role].keys()[0]
             subsample_game = Bootstrap.subsample(sample_game, len(sample_game.getPayoffData(a_profile, a_role, a_strategy)))
             equilibria = Nash.mixed_nash(subsample_game)
             results[i][stdev][0] = [{"profile": eq, "statistic": Regret.regret(base_game, eq),
-                                  "bootstrap" : Bootstrap.bootstrap(subsample_game, eq, Regret.regret, "resample", ["profile"])
+                                  "bootstrap" : Bootstrap.bootstrap(subsample_game, eq, Regret.regret, "resample", ["profile"]),
+                                  "sample_count": subsample_game.max_samples
                     } for eq in equilibria]
     f = open(args.output_file, 'w')
     f.write(IO.to_JSON_str(results, indent=None))
