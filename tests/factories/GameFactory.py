@@ -1,5 +1,5 @@
 from RoleSymmetricGame import Game, PayoffData
-from Sequential import ObservationMatrix
+from sequential.data import ObservationMatrix
 from itertools import product, combinations_with_replacement as CwR
 import random
 
