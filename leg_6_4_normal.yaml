@@ -1,4 +1,0 @@
-num_games: 1000
-stdevs:
-  - 200.0
-model: normal
