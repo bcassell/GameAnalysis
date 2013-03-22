@@ -52,6 +52,13 @@ def add_noise_sequentially(game, model, evaluator, samples_per_step):
                 model(samples_per_step)) for s in prof[r]] for r in game.roles})
     return matrix
 
+def _construct_stopping_rule(input, game):
+    options = input.get('options', {})
+    if input['type'] == 'stderr':
+        return StandardErrorEvaluator(input['standard_err_threshold'], game.knownProfiles())
+    elif input['type'] == 'equilibrium':
+        return EquilibriumCompareEvaluator(input['compare_threshold'], **options) 
+
 def main():
     parser = ArgumentParser(description='Sequential Bootstrap Experiments')
     parser.add_argument('input_file', metavar='input_file', help='a yaml file specifying the required details')
@@ -59,15 +66,16 @@ def main():
     args = parser.parse_args()
     input = yaml.safe_load(open(args.input_file))
     results = [{s:{} for s in input['stdevs']} for i in range(input['num_games'])]
+
     for i in range(input['num_games']):
         print i
-        base_game = RandomGames.local_effect(6, 4)
+        base_game = RandomGames.local_effect(input['players'], input['strategies'])
+        stopping_rule = _construct_stopping_rule(input['stopping_rule'], base_game)
         for stdev in input['stdevs']:
             if input['model'] == 'bimodal':
-                sample_game = add_bimodal_noise_sequentially(base_game, stdev, StandardErrorEvaluator(5.0, base_game.knownProfiles()), 10).toGame()
+                sample_game = add_bimodal_noise_sequentially(base_game, stdev, stopping_rule, input['samples_per_step']).toGame()
             else:
-                sample_game = add_noise_sequentially(base_game, partial(normal, 0, stdev),
-                                                 StandardErrorEvaluator(5.0, base_game.knownProfiles()), 10).toGame()
+                sample_game = add_noise_sequentially(base_game, partial(normal, 0, stdev), stopping_rule, input['samples_per_step']).toGame()
             a_profile = sample_game.knownProfiles()[0]
             a_role = a_profile.asDict().keys()[0]
             a_strategy = a_profile.asDict()[a_role].keys()[0]
