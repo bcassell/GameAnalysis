@@ -12,6 +12,12 @@ import yaml
 from random import choice
 from argparse import ArgumentParser
 
+def confidence_interval_stopping_rule_experiment(game, noise_model, samples_per_step):
+    matrix = ObservationMatrix()
+    
+    equilibria = Nash.mixed_nash(game)
+    
+
 def add_bimodal_noise_sequentially(game, max_stdev, evaluator, samples_per_step):
     """
     Generate ObservationMatrix sequentially with bimodal gaussian noise added to each payoff.
@@ -57,7 +63,7 @@ def _construct_stopping_rule(input, game):
     if input['type'] == 'stderr':
         return StandardErrorEvaluator(input['standard_err_threshold'], game.knownProfiles())
     elif input['type'] == 'equilibrium':
-        return EquilibriumCompareEvaluator(input['compare_threshold'], **options) 
+        return EquilibriumCompareEvaluator(input['compare_threshold'], **options)
 
 def main():
     parser = ArgumentParser(description='Sequential Bootstrap Experiments')

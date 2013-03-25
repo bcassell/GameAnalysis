@@ -77,7 +77,7 @@ def generate_percentiles(data, bucket_size):
 	return percentiles
 
 
-def plot_percentiles(percentiles, bucket_size, out_file):
+def plot_percentiles(percentiles, bucket_size, out_file, sample_counts=None):
 	pp = PdfPages(out_file)
 	variances = sorted(percentiles)
 	subsamples = sorted(percentiles[variances[0]])
@@ -91,8 +91,12 @@ def plot_percentiles(percentiles, bucket_size, out_file):
 		plt.plot(x_axis_points, x_axis_points/100., "k--", \
 				label="perfect calibration")
 		for s in subsamples:
-			plt.plot(x_axis_points, percentiles[v][s][:-1] / float( \
+			if sample_counts == None:
+				plt.plot(x_axis_points, percentiles[v][s][:-1] / float( \
 					percentiles[v][s][-1]), label=str(s) + " samples")
+			else:
+				plt.plot(x_axis_points, percentiles[v][s][:-1] / float( \
+					percentiles[v][s][-1]), label=str(sample_counts[str(v)]) + " samples")
 		plt.legend(loc="lower right", prop={'size':6})
 		pp.savefig()
 	pp.close()
@@ -199,7 +203,11 @@ if __name__ == "__main__":
 	data, args = parse_input()
 	if args.mode == "pct":
 		percentiles = generate_percentiles(data, args.bucket)
-		plot_percentiles(percentiles, args.bucket, args.out_file)
+		if "sample_count" in data[0].values()[0].values()[0][0]:
+			plot_percentiles(percentiles, args.bucket, args.out_file, 
+							{var: np.mean([x["sample_count"] for d in data for x in d[var]["0"]]) for var in data[0].keys()})
+		else:
+			plot_percentiles(percentiles, args.bucket, args.out_file)
 	elif args.mode == "dst":
 		distributions = generate_distributions(data)
 		plot_distributions(distributions, args.bucket, args.axes, args.out_file)

@@ -73,7 +73,7 @@ class ConfidenceIntervalEvaluator:
         flag = False
         for profile in self.target_set.keys():
             print profile
-            confidence_interval = self.ci_calculator.regret_confidence_interval(matrix, profile)
+            confidence_interval = self.ci_calculator.two_sided_interval(matrix, profile)
             print confidence_interval
             if self.delta >= confidence_interval[0]:
                 if self.delta > confidence_interval[1]:
