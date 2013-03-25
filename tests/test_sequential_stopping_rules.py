@@ -82,7 +82,7 @@ class describe_confidence_interval_evaluator:
         
     def it_requests_sampling_when_delta_is_in_interval(self):
         class FakeCI:
-            def regret_confidence_interval(self, matrix, profile):
+            def two_sided_interval(self, matrix, profile):
                 return [0.0, 1.0]
             
         ci_calculator = FakeCI()
@@ -95,7 +95,7 @@ class describe_confidence_interval_evaluator:
             def __init__(self):
                 self.count = 0
                 
-            def regret_confidence_interval(self, matrix, profile):
+            def two_sided_interval(self, matrix, profile):
                 self.count += 1
                 if self.count % 2 == 0:
                     return [0.6, 1.0]
@@ -112,7 +112,7 @@ class describe_confidence_interval_evaluator:
             def __init__(self):
                 self.count = 0
                 
-            def regret_confidence_interval(self, matrix, profile):
+            def two_sided_interval(self, matrix, profile):
                 self.count += 1
                 if self.count % 2 == 0:
                     return [0.6, 1.0]
