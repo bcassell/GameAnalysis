@@ -52,6 +52,7 @@ class h_array(np.ndarray):
 
 	def __hash__(self):
 		try:
+			print 'try'
 			return self._hash
 		except AttributeError:
 			self._hash = hash(tuple(self.flat))
