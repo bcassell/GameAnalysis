@@ -1,6 +1,6 @@
 from sequential.data import ObservationMatrix, PayoffData, Profile
 from sequential.stopping_rules import EquilibriumCompareEvaluator, StandardErrorEvaluator, ConfidenceIntervalEvaluator, Nash, Regret
-from factories.GameFactory import create_observation_matrix
+from factories.GameFactory import create_observation_matrix, create_symmetric_game
 from numpy import array
 from numpy.testing import assert_array_almost_equal
 
@@ -77,17 +77,17 @@ class describe_standard_error_evaluator:
 class describe_confidence_interval_evaluator:
     def it_requests_sampling_when_given_an_empty_observation_matrix(self):
         matrix = ObservationMatrix()
-        evaluator = ConfidenceIntervalEvaluator([], 0.5, None)
+        evaluator = ConfidenceIntervalEvaluator(create_symmetric_game(), [], 0.5, 0.95, None)
         assert evaluator.continue_sampling(matrix) == True
         
     def it_requests_sampling_when_delta_is_in_interval(self):
         class FakeCI:
-            def two_sided_interval(self, matrix, profile):
+            def two_sided_interval(self, matrix, profile, alpha):
                 return [0.0, 1.0]
             
         ci_calculator = FakeCI()
         matrix = create_observation_matrix()
-        evaluator = ConfidenceIntervalEvaluator(matrix.knownProfiles(), 0.5, ci_calculator)
+        evaluator = ConfidenceIntervalEvaluator(matrix.toGame(), matrix.knownProfiles(), 0.5, 0.95, ci_calculator)
         assert evaluator.continue_sampling(matrix) == True
         
     def it_does_not_request_sampling_when_delta_is_outside_all_intervals(self):
@@ -95,7 +95,7 @@ class describe_confidence_interval_evaluator:
             def __init__(self):
                 self.count = 0
                 
-            def two_sided_interval(self, matrix, profile):
+            def two_sided_interval(self, matrix, profile, alpha):
                 self.count += 1
                 if self.count % 2 == 0:
                     return [0.6, 1.0]
@@ -104,7 +104,7 @@ class describe_confidence_interval_evaluator:
 
         ci_calculator = FakeCI()        
         matrix = create_observation_matrix()
-        evaluator = ConfidenceIntervalEvaluator(matrix.knownProfiles(), 0.5, ci_calculator)
+        evaluator = ConfidenceIntervalEvaluator(matrix.toGame(), matrix.knownProfiles(), 0.5, 0.95, ci_calculator)
         assert evaluator.continue_sampling(matrix) == False
     
     def it_tracks_whether_or_not_a_profile_is_a_delta_nash(self):
@@ -112,7 +112,7 @@ class describe_confidence_interval_evaluator:
             def __init__(self):
                 self.count = 0
                 
-            def two_sided_interval(self, matrix, profile):
+            def two_sided_interval(self, matrix, profile, alpha):
                 self.count += 1
                 if self.count % 2 == 0:
                     return [0.6, 1.0]
@@ -121,11 +121,11 @@ class describe_confidence_interval_evaluator:
         
         ci_calculator = FakeCI()        
         matrix = create_observation_matrix()
-        evaluator = ConfidenceIntervalEvaluator(matrix.knownProfiles(), 0.5, ci_calculator)
+        evaluator = ConfidenceIntervalEvaluator(matrix.toGame(), matrix.knownProfiles(), 0.5, 0.95, ci_calculator)
         evaluator.continue_sampling(matrix)
         count = 0
-        print evaluator.target_set.items()
-        for result in evaluator.target_set.values():
+        print evaluator.target_hash.items()
+        for result in evaluator.target_hash.values():
             count += 1
             if count % 2 == 0:
                 assert result == "No"

@@ -1,7 +1,9 @@
 from scipy.stats import stats
 from numpy import linalg
+import numpy as np
 import Nash
 import Regret
+from data import Hashable
 
 class StandardErrorEvaluator:
     def __init__(self, standard_err_threshold, target_set):
@@ -62,25 +64,39 @@ class EquilibriumCompareEvaluator:
         return decision
 
 class ConfidenceIntervalEvaluator:
-    def __init__(self, target_set, delta, confidence_interval_calculator):
-        self.target_set = {profile: "Undetermined" for profile in target_set}
+    def __init__(self, game, target_set, delta, alpha, confidence_interval_calculator):
+        self.target_set = target_set
+        self.target_hash = {}
+        for profile in target_set:
+            if type(profile) is np.ndarray:
+                self.target_hash[self._convert_profile(profile)] = "Undetermined"
+            else:
+                self.target_hash[profile] = "Undetermined"
         self.delta = delta
+        self.alpha = alpha
         self.ci_calculator = confidence_interval_calculator
         
     def continue_sampling(self, matrix):
         if matrix.profile_dict == {}:
             return True
         flag = False
-        for profile in self.target_set.keys():
-            print profile
-            confidence_interval = self.ci_calculator.two_sided_interval(matrix, profile)
-            print confidence_interval
+        for profile in self.target_hash.keys():
+            confidence_interval = self.ci_calculator.two_sided_interval(matrix, profile.unwrap(), self.alpha)
             if self.delta >= confidence_interval[0]:
                 if self.delta > confidence_interval[1]:
-                    self.target_set[profile] = "Yes"
+                    self.target_hash[profile] = "Yes"
                 else:
-                    self.target_set[profile] = "Undetermined"
+                    self.target_hash[profile] = "Undetermined"
                     flag = True
             else:
-                self.target_set[profile] = "No"
+                self.target_hash[profile] = "No"
         return flag
+
+    def get_decision(self, game, profile):
+        return self.target_hash[self._convert_profile(profile)]
+
+
+    def _convert_profile(self, profile):
+        if type(profile) is np.ndarray:
+            return Hashable(profile, True)
+        return profile
