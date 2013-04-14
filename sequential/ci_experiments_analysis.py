@@ -10,6 +10,7 @@ def _summarize(name, results):
     counter_false_true = 0
     counter_false_false = 0
     counter_false_undecided = 0
+    data = {x: [] for x in ["ff", "ft", "fu", "tf", "tt", "tu"]}
     for result in results:
         if result["game_eq"] is False:
             if result["stopping_decision"] == "No":

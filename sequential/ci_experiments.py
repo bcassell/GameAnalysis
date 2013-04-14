@@ -4,28 +4,40 @@ from argparse import ArgumentParser
 import GameIO
 import Nash
 import Regret
+from RoleSymmetricGame import PayoffData
 from data import ObservationMatrix
 from stopping_rules import ConfidenceIntervalEvaluator
 from confidence import BootstrapConfidenceInterval
 
 def single_test(game, noise_model, samples_per_step, delta, alpha):
-    matrix = ObservationMatrix()
+    old_matrix = ObservationMatrix()
     for prof in game.knownProfiles():
-        matrix.addObservations(prof, noise_model.generate_samples(game, prof, samples_per_step))
-    candidate = Nash.mixed_nash(matrix.toGame(), at_least_one=True)[0]
+        old_matrix.addObservations(prof, noise_model.generate_samples(game, prof, samples_per_step))
+    candidate = Nash.mixed_nash(old_matrix.toGame(), at_least_one=True)[0]
     regret = Regret.regret(game, candidate)
     data = {"candidate": candidate, "game_eq": regret < delta, "regret": regret, "ne-regrets": {role: 
                 {strategy: Regret.regret(game, candidate, role, strategy) for strategy in game.strategies[role]} for role in game.roles}}
     evaluator = ConfidenceIntervalEvaluator(game, [candidate], delta, alpha, BootstrapConfidenceInterval())
     count = samples_per_step
-    target_set = Regret.mixture_neighbors(game, candidate)
-    while evaluator.continue_sampling(matrix) and count < 500:
-        print "sample"
+    target_set = Regret.mixture_neighbors(game, candidate).union(Regret.feasible_profiles(game, candidate))
+    matrix = ObservationMatrix()
+    for profile in target_set:
+        matrix.addObservations(profile, {r: [PayoffData(s, profile[r][s], data_set) for s, data_set in s_hash.items()]
+                                         for r, s_hash in old_matrix.profile_dict[profile].items()})
+    while evaluator.continue_sampling(matrix) and count < 1000:
+        print evaluator.confidence_interval
         for prof in target_set:
             matrix.addObservations(prof, noise_model.generate_samples(game, prof, samples_per_step))
         count += samples_per_step
     data["stopping_decision"] = evaluator.get_decision(game, candidate)
     data["sample_count"] = matrix.toGame().max_samples
+    data["final_interval"] = evaluator.confidence_interval
+    print data["final_interval"]
+    if data["game_eq"] == True and data["stopping_decision"] == "No" and data["final_interval"][0] > 1:
+        print data
+        print matrix.profile_dict
+        print target_set
+        print Regret.feasible_profiles(game, candidate)
     return data
 
 def main():

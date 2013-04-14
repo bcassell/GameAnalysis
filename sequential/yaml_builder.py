@@ -18,10 +18,10 @@ def construct_model(stdev, input):
 def construct_game(input):
     options = input.get('options', {})
     if input['type'] == 'local_effect':
-        game = RandomGames.local_effect(**options)
+        game = RandomGames.local_effect_game(**options)
     elif input['type'] == 'congestion':
-        game = RandomGames.congestion(**options)
+        game = RandomGames.congestion_game(**options)
     elif input['type'] == 'uniform':
-        game = RandomGames.uniform_symmetric(**options)
+        game = RandomGames.uniform_symmetric_game(**options)
     RandomGames.rescale_payoffs(game)
     return game
