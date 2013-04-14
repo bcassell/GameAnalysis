@@ -81,9 +81,13 @@ class ConfidenceIntervalEvaluator:
             return True
         flag = False
         for profile in self.target_hash.keys():
-            confidence_interval = self.ci_calculator.two_sided_interval(matrix, profile.unwrap(), self.alpha)
-            if self.delta >= confidence_interval[0]:
-                if self.delta > confidence_interval[1]:
+            if type(profile) is Hashable:
+                interval_input = profile.unwrap()
+            else:
+                interval_input = profile
+            self.confidence_interval = self.ci_calculator.two_sided_interval(matrix, interval_input, self.alpha)
+            if self.delta >= self.confidence_interval[0]:
+                if self.delta > self.confidence_interval[1]:
                     self.target_hash[profile] = "Yes"
                 else:
                     self.target_hash[profile] = "Undetermined"
