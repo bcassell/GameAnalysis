@@ -6,10 +6,10 @@ import Nash
 import Regret
 from RoleSymmetricGame import PayoffData
 from data import ObservationMatrix
-from stopping_rules import ConfidenceIntervalEvaluator
+from stopping_rules import ConfidenceIntervalEvaluator, BestEffortCIEvaluator
 from confidence import BootstrapConfidenceInterval
 
-def single_test(game, noise_model, samples_per_step, delta, alpha):
+def single_test(game, noise_model, samples_per_step, delta, alpha, best_effort="false"):
     old_matrix = ObservationMatrix()
     for prof in game.knownProfiles():
         old_matrix.addObservations(prof, noise_model.generate_samples(game, prof, samples_per_step))
@@ -17,7 +17,11 @@ def single_test(game, noise_model, samples_per_step, delta, alpha):
     regret = Regret.regret(game, candidate)
     data = {"candidate": candidate, "game_eq": regret < delta, "regret": regret, "ne-regrets": {role: 
                 {strategy: Regret.regret(game, candidate, role, strategy) for strategy in game.strategies[role]} for role in game.roles}}
-    evaluator = ConfidenceIntervalEvaluator(game, [candidate], delta, alpha, BootstrapConfidenceInterval())
+    if best_effort == "true":
+        print 'true'
+        evaluator = BestEffortCIEvaluator(game, [candidate], delta, alpha, BootstrapConfidenceInterval())
+    else:
+        evaluator = ConfidenceIntervalEvaluator(game, [candidate], delta, alpha, BootstrapConfidenceInterval())
     count = samples_per_step
     target_set = Regret.mixture_neighbors(game, candidate).union(Regret.feasible_profiles(game, candidate))
     matrix = ObservationMatrix()
@@ -29,15 +33,10 @@ def single_test(game, noise_model, samples_per_step, delta, alpha):
         for prof in target_set:
             matrix.addObservations(prof, noise_model.generate_samples(game, prof, samples_per_step))
         count += samples_per_step
-    data["stopping_decision"] = evaluator.get_decision(game, candidate)
+    data["stopping_decision"] = evaluator.get_decision(matrix, candidate)
     data["sample_count"] = matrix.toGame().max_samples
     data["final_interval"] = evaluator.confidence_interval
     print data["final_interval"]
-    if data["game_eq"] == True and data["stopping_decision"] == "No" and data["final_interval"][0] > 1:
-        print data
-        print matrix.profile_dict
-        print target_set
-        print Regret.feasible_profiles(game, candidate)
     return data
 
 def main():
@@ -55,7 +54,7 @@ def main():
         for i in range(input['num_games']):
             print i
             base_game = yaml_builder.construct_game(input['game'])
-            data = single_test(base_game, noise_model, input['samples_per_step'], input['delta'], input['alpha'])
+            data = single_test(base_game, noise_model, input['samples_per_step'], input['delta'], input['alpha'], input['best_effort'])
             f.write(GameIO.to_JSON_str(data, indent=None))
             if i == input['num_games']-1:
                 f.write("]")

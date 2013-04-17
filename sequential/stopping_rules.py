@@ -81,11 +81,7 @@ class ConfidenceIntervalEvaluator:
             return True
         flag = False
         for profile in self.target_hash.keys():
-            if type(profile) is Hashable:
-                interval_input = profile.unwrap()
-            else:
-                interval_input = profile
-            self.confidence_interval = self.ci_calculator.two_sided_interval(matrix, interval_input, self.alpha)
+            self.confidence_interval = self.ci_calculator.two_sided_interval(matrix, self._interval_input(profile), self.alpha)
             if self.delta >= self.confidence_interval[0]:
                 if self.delta > self.confidence_interval[1]:
                     self.target_hash[profile] = "Yes"
@@ -96,7 +92,7 @@ class ConfidenceIntervalEvaluator:
                 self.target_hash[profile] = "No"
         return flag
 
-    def get_decision(self, game, profile):
+    def get_decision(self, matrix, profile):
         return self.target_hash[self._convert_profile(profile)]
 
 
@@ -104,3 +100,21 @@ class ConfidenceIntervalEvaluator:
         if type(profile) is np.ndarray:
             return Hashable(profile, True)
         return profile
+    
+    def _interval_input(self, profile):
+        if type(profile) is Hashable:
+            return profile.unwrap()
+        else:
+            return profile
+
+class BestEffortCIEvaluator(ConfidenceIntervalEvaluator):
+    def get_decision(self, matrix, profile):
+        if self.target_hash[self._convert_profile(profile)] == "Undetermined":
+            if self.ci_calculator.one_sided_interval(matrix, self._interval_input(profile), 0.5) < self.delta:
+                return "Undetermined-Yes"
+            else:
+                return "Undetermined-No"
+        else:
+            return self.target_hash[self._convert_profile(profile)]
+
+                
