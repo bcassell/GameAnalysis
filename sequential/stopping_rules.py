@@ -11,6 +11,7 @@ class StandardErrorEvaluator:
         self.target_set = target_set
         
     def continue_sampling(self, matrix):
+        self.matrix = matrix
         print 'more sampling'
         if matrix.profile_dict == {}:
             return True
@@ -20,6 +21,9 @@ class StandardErrorEvaluator:
                     if stats.sem(matrix.getPayoffData(profile, role, strategy)) >= self.standard_err_threshold:
                         return True
         return False
+    
+    def equilibria(self):
+        return Nash.mixed_nash(self.matrix.toGame())
 
 class EquilibriumCompareEvaluator:
     def __init__(self, compare_threshold, regret_threshold=1e-4, dist_threshold=None, 
@@ -62,6 +66,37 @@ class EquilibriumCompareEvaluator:
         else:
             self.old_equilibria = equilibria
         return decision
+    
+    def equilibria(self):
+        return self.old_equilibria
+    
+
+class EquilibriumConfidenceEvaluator:
+    def __init__(self, delta, alpha, confidence_interval_calculator, random_restarts=0, iters=10000, converge_threshold=1e-8):
+        self.delta = delta
+        self.alpha = alpha
+        self.ci_calculator = confidence_interval_calculator
+        self.eq = []
+        self.random_restarts = random_restarts
+        self.iters = iters
+        self.converge_threshold = converge_threshold
+        
+    def continue_sampling(self, matrix):
+        if matrix.profile_dict == {}:
+            return True
+        game = matrix.toGame()
+        decision = True
+        for m in game.biasedMixtures() + [game.uniformMixture()] + \
+                [game.randomMixture() for __ in range(self.random_restarts)]:
+            eq = Nash.replicator_dynamics(game, m, self.iters, self.converge_threshold)
+            confidence_interval = self.ci_calculator.one_sided_interval(matrix, eq, self.alpha)
+            if confidence_interval < self.delta:
+                self.eq.append(eq)
+                decision = False
+        return decision
+    
+    def equilibria(self):
+        return self.eq
 
 class ConfidenceIntervalEvaluator:
     def __init__(self, game, target_set, delta, alpha, confidence_interval_calculator):

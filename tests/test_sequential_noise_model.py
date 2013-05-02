@@ -1,6 +1,7 @@
 from sequential.noise_models import MultimodalNormalNoise, SimulationBasedGame
 import tests.factories.GameFactory as Factory
 from RoleSymmetricGame import PayoffData
+import numpy as np
 
 class describe_multi_modal_noise:
     def it_stores_profile_info(self):
@@ -42,31 +43,19 @@ class describe_multi_modal_noise:
                 assert counters[s] == 1
     
 class describe_simulation_based_game:
-    def it_stores_available_indices_in_a_counter_dict(self):
-        matrix = Factory.create_observation_matrix()
-        temp = matrix.knownProfiles()[0]
-        matrix.addObservations(temp, {r: [PayoffData(s, count, [23.0]) for s, count in s_hash.items()] for r, s_hash in temp.items()})
+    def it_draws_from_the_expected_range(self):
+        matrix = Factory.create_observation_matrix(sample_count=5)
         game = matrix.toGame()
-        sbg = SimulationBasedGame(game)
-        assert sbg.counter_dict[temp] == set(range(game.max_samples))
-        assert sbg.counter_dict[matrix.knownProfiles()[1]] == set(range(game.max_samples - 1))
-    
-    def it_reduces_the_availabe_indices_when_samples_are_gathered(self):
+        indexes = np.random.random_integers(0, game.max_samples-1, size=1000)
+        assert min(indexes) == 0
+        assert max(indexes) == 4
+        assert len(indexes) == 1000
+           
+    def it_gives_the_requested_observations_with_duplicates(self):
         matrix = Factory.create_observation_matrix(sample_count=5)
         game = matrix.toGame()
         sbg = SimulationBasedGame(game)
         target_profile = game.knownProfiles()[0]
-        observations = sbg.generate_samples(game, target_profile, 2)
-        assert len(sbg.counter_dict[target_profile]) == game.max_samples - 2
-        assert observations == {r: [PayoffData(s, count, [game.getPayoffData(target_profile, r, s)[x]
-                    for x in set(range(game.max_samples)).difference(sbg.counter_dict[target_profile])])
-                    for s, count in s_hash.items()] for r, s_hash in target_profile.items()}
-    
-    def it_gives_the_requested_observations(self):
-        matrix = Factory.create_observation_matrix(sample_count=5)
-        game = matrix.toGame()
-        sbg = SimulationBasedGame(game)
-        target_profile = game.knownProfiles()[0]
-        observations = sbg.get_observations(target_profile, [0, 2])
-        assert observations == {r: [PayoffData(s, count, [game.getPayoffData(target_profile, r, s)[0], game.getPayoffData(target_profile, r, s)[2]])
+        observations = sbg.get_observations(target_profile, [0, 2, 2])
+        assert observations == {r: [PayoffData(s, count, [game.getPayoffData(target_profile, r, s)[0], game.getPayoffData(target_profile, r, s)[2], game.getPayoffData(target_profile, r, s)[2]])
                     for s, count in s_hash.items()] for r, s_hash in target_profile.items()}
