@@ -15,8 +15,7 @@ def single_test(game, noise_model, samples_per_step, delta, alpha, best_effort="
         old_matrix.addObservations(prof, noise_model.generate_samples(game, prof, samples_per_step))
     candidate = Nash.mixed_nash(old_matrix.toGame(), at_least_one=True)[0]
     regret = Regret.regret(game, candidate)
-    data = {"candidate": candidate, "game_eq": regret < delta, "regret": regret, "ne-regrets": {role: 
-                {strategy: Regret.regret(game, candidate, role, strategy) for strategy in game.strategies[role]} for role in game.roles}}
+    data = {"candidate": candidate, "game_eq": regret < delta, "regret": regret, "ne-regrets": Regret.equilibrium_regrets(game, candidate)}
     if best_effort == "true":
         print 'true'
         evaluator = BestEffortCIEvaluator(game, [candidate], delta, alpha, BootstrapConfidenceInterval())

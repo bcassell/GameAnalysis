@@ -92,11 +92,13 @@ def plot_percentiles(percentiles, bucket_size, out_file, sample_counts=None):
 				label="perfect calibration")
 		for s in subsamples:
 			if sample_counts == None:
-				plt.plot(x_axis_points, percentiles[v][s][:-1] / float( \
+				plt.plot(x_axis_points, percentiles[v][s][:-1] / float(
 					percentiles[v][s][-1]), label=str(s) + " samples")
 			else:
 				plt.plot(x_axis_points, percentiles[v][s][:-1] / float( \
 					percentiles[v][s][-1]), label=str(sample_counts[str(v)]) + " samples")
+				plt.axvline(95, label=percentiles[v][s][int(.95*len(percentiles[v][s]))] / float(
+					percentiles[v][s][-1]))
 		plt.legend(loc="lower right", prop={'size':6})
 		pp.savefig()
 	pp.close()
