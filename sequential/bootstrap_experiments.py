@@ -23,7 +23,6 @@ def add_noise_sequentially(game, model, evaluator, samples_per_step):
         for prof in game.knownProfiles():
             matrix.addObservations(prof, model.generate_samples(game, prof, samples_per_step))
         count += samples_per_step
-        print count
     return [matrix, evaluator.equilibria()]
 
 def main():
@@ -35,7 +34,6 @@ def main():
     results = [{s:{} for s in input['stdevs']} for i in range(input['num_games'])]
 
     for i in range(input['num_games']):
-        print i
         base_game = yaml_builder.construct_game(input['game'])
         stopping_rule = yaml_builder.construct_stopping_rule(input['stopping_rule'], base_game)
         for stdev in input['stdevs']:

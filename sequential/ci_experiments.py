@@ -17,7 +17,6 @@ def single_test(game, noise_model, samples_per_step, delta, alpha, best_effort="
     regret = Regret.regret(game, candidate)
     data = {"candidate": candidate, "game_eq": regret < delta, "regret": regret, "ne-regrets": Regret.equilibrium_regrets(game, candidate)}
     if best_effort == "true":
-        print 'true'
         evaluator = BestEffortCIEvaluator(game, [candidate], delta, alpha, BootstrapConfidenceInterval())
     else:
         evaluator = ConfidenceIntervalEvaluator(game, [candidate], delta, alpha, BootstrapConfidenceInterval())
@@ -27,15 +26,13 @@ def single_test(game, noise_model, samples_per_step, delta, alpha, best_effort="
     for profile in target_set:
         matrix.addObservations(profile, {r: [PayoffData(s, profile[r][s], data_set) for s, data_set in s_hash.items()]
                                          for r, s_hash in old_matrix.profile_dict[profile].items()})
-    while evaluator.continue_sampling(matrix) and count < 1000:
-        print evaluator.confidence_interval
+    while evaluator.continue_sampling(matrix) and count < 2000:
         for prof in target_set:
             matrix.addObservations(prof, noise_model.generate_samples(game, prof, samples_per_step))
         count += samples_per_step
     data["stopping_decision"] = evaluator.get_decision(matrix, candidate)
     data["sample_count"] = matrix.toGame().max_samples
     data["final_interval"] = evaluator.confidence_interval
-    print data["final_interval"]
     return data
 
 def main():
@@ -48,10 +45,8 @@ def main():
     f.write("{")
     for stdev in input['stdevs']:
         f.write("\""+str(stdev)+"\""+":[")
-        print stdev
         noise_model = yaml_builder.construct_model(stdev, input['noise_model'])
         for i in range(input['num_games']):
-            print i
             base_game = yaml_builder.construct_game(input['game'])
             data = single_test(base_game, noise_model, input['samples_per_step'], input['delta'], input['alpha'], input['best_effort'])
             f.write(GameIO.to_JSON_str(data, indent=None))

@@ -1,7 +1,9 @@
-*.json
-*.yaml
+sequential/*.json
+sequential/*.yaml
 
-results
+results/*.json
+results/*.pdf
+
 
 .DS_Store
 
