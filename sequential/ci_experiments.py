@@ -1,4 +1,4 @@
-import yaml
+import json
 import yaml_builder
 from argparse import ArgumentParser
 import GameIO
@@ -37,10 +37,10 @@ def single_test(game, noise_model, samples_per_step, delta, alpha, best_effort="
 
 def main():
     parser = ArgumentParser(description='Sequential CI Experiments')
-    parser.add_argument('input_file', metavar='input_file', help='a yaml file specifying the required details')
+    parser.add_argument('input_file', metavar='input_file', help='a json file specifying the required details')
     parser.add_argument('output_file', metavar='output_file', help='output json')
     args = parser.parse_args()
-    input = yaml.safe_load(open(args.input_file))
+    input = json.loads(open(args.input_file).read())
     f = open(args.output_file, 'a')
     f.write("{")
     for stdev in input['stdevs']:
