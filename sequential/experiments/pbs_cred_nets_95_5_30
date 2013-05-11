@@ -4,8 +4,8 @@
 #PBS -A wellman_flux
 #PBS -q flux
 #PBS -l qos=flux
-#PBS -l nodes=1, walltime=1:00:00
-#PBS -l pmem=1000mb
+#PBS -l nodes=1, walltime=6:00:00
+#PBS -l pmem=2000mb
 #PBS -t 1-10
 #PBS -M bcassell@umich.edu
 #PBS -m abe

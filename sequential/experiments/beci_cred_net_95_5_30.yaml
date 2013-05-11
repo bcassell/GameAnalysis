@@ -7,7 +7,7 @@ stdevs:
 game:
   type: 'file'
   file: 'sequential/experiments/CN_bootstrap_1313.json'
-samples_per_step: 30
+samples_per_step: 50
 noise_model:
   type: 'file'
   file: 'sequential/experiments/CN_bootstrap_1313.json'
