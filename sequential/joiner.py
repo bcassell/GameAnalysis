@@ -23,4 +23,4 @@ def parse_input():
 
 if __name__ == "__main__":
     data, args = parse_input()
-    open(args.out_file, 'w').write(json.dumps(data))
+    json.dump(data, open(args.out_file, 'w'))
