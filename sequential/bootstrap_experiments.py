@@ -3,7 +3,7 @@ import Regret
 import GameIO as IO
 import Bootstrap
 from sequential.data import ObservationMatrix
-import yaml
+import json
 from argparse import ArgumentParser
 import yaml_builder
     
@@ -30,7 +30,7 @@ def main():
     parser.add_argument('input_file', metavar='input_file', help='a yaml file specifying the required details')
     parser.add_argument('output_file', metavar='output_file', help='output json suitable for use with the plotting script')
     args = parser.parse_args()
-    input = yaml.safe_load(open(args.input_file))
+    input = json.loads(open(args.input_file))
     results = [{s:{} for s in input['stdevs']} for i in range(input['num_games'])]
 
     for i in range(input['num_games']):
@@ -41,7 +41,7 @@ def main():
             matrix, equilibria = add_noise_sequentially(base_game, noise_model, stopping_rule, input['samples_per_step'])
             sample_game = matrix.toGame()
             results[i][stdev][0] = [{"profile": eq, "statistic": Regret.regret(base_game, eq),
-                                  "bootstrap" : Bootstrap.bootstrap(sample_game, eq, Regret.regret, "resample", ["profile"]),
+                                  "bootstrap" : Bootstrap.bootstrap(sample_game, eq, Regret.regret, "resample", ["game"]),
                                   "sample_count": sample_game.max_samples
                     } for eq in equilibria]
     f = open(args.output_file, 'w')
