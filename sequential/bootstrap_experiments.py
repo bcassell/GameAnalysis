@@ -30,7 +30,7 @@ def main():
     parser.add_argument('input_file', metavar='input_file', help='a yaml file specifying the required details')
     parser.add_argument('output_file', metavar='output_file', help='output json suitable for use with the plotting script')
     args = parser.parse_args()
-    input = json.loads(open(args.input_file))
+    input = json.loads(open(args.input_file).read())
     results = [{s:{} for s in input['stdevs']} for i in range(input['num_games'])]
 
     for i in range(input['num_games']):
