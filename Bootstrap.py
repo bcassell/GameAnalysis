@@ -28,6 +28,11 @@ def subsample(game, num_samples):
 	sg.max_samples = num_samples
 	return sg
 
+def hard_resample(game):
+	sg = copy(game)
+	sg.sample_values = map(lambda p: p[:,:,np.random.randint(0, p.shape[-1], p.shape[-1])], sg.sample_values)
+	sg.reset()
+	return sg
 
 def pre_aggregate(game, count):
 	"""
@@ -72,6 +77,30 @@ def bootstrap(game, equilibrium, statistic=regret, method="resample", \
 	for __ in range(points):
 		method(*method_args)
 		boot_dstr.append(statistic(game, equilibrium))
+	game.reset()
+	boot_dstr.sort()
+	return boot_dstr
+
+def double_bootstrap(game, equilibrium, statistic=regret, method="resample", \
+				method_args=[], points=1000):
+	"""
+	Returns a bootstrap distribution for the statistic.
+
+	To run a resample regret boostrap:
+		bootstrap(game, eq)
+	To run a single-sample regret bootstrap: 
+		bootstrap(game, eq, method='single_sample')
+	To run a replicator dynamics bootstrap:
+		bootstrap(game, eq, replicator_dynamics)
+	"""
+	boot_dstr = []
+	for __ in range(points):
+		sg = hard_resample(game)
+		gmethod = getattr(sg, method)
+		for __ in range(points):
+			gmethod(*method_args)
+			boot_dstr.append(statistic(sg, equilibrium))
+			
 	game.reset()
 	boot_dstr.sort()
 	return boot_dstr

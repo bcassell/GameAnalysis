@@ -23,7 +23,7 @@ def add_noise_sequentially(game, model, evaluator, samples_per_step):
         for prof in game.knownProfiles():
             matrix.addObservations(prof, model.generate_samples(game, prof, samples_per_step))
         count += samples_per_step
-    return [matrix, evaluator.equilibria()]
+    return [matrix, evaluator.equilibria(), count]
 
 def main():
     parser = ArgumentParser(description='Sequential Bootstrap Experiments')
@@ -35,11 +35,15 @@ def main():
 
     for i in range(input['num_games']):
         base_game = yaml_builder.construct_game(input['game'])
-        stopping_rule = yaml_builder.construct_stopping_rule(input['stopping_rule'], base_game)
         for stdev in input['stdevs']:
+            stopping_rule = yaml_builder.construct_stopping_rule(input['stopping_rule'], base_game)
             noise_model = yaml_builder.construct_model(stdev, input['noise_model'])
-            matrix, equilibria = add_noise_sequentially(base_game, noise_model, stopping_rule, input['samples_per_step'])
+            matrix, equilibria, count = add_noise_sequentially(base_game, noise_model, stopping_rule, input['samples_per_step'])
             sample_game = matrix.toGame()
+            print count
+            print sample_game.max_samples
+            if count == 5:
+                print len(equilibria)
             results[i][stdev][0] = [{"profile": eq, "statistic": Regret.regret(base_game, eq),
                                   "bootstrap" : Bootstrap.bootstrap(sample_game, eq, Regret.regret, "resample", ["game"]),
                                   "sample_count": sample_game.max_samples
