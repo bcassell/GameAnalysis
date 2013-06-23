@@ -19,7 +19,7 @@ def construct_model(stdev, input):
     if input['type'] == 'gaussian':
         return MultimodalNormalNoise(stdev, **options)
     if input['type'] == 'file':
-        return SimulationBasedGame(Reductions.deviation_preserving_reduction(GameIO.read(input['file']), {'All': 6}))
+        return SimulationBasedGame(GameIO.read(input['file']))
     
 def construct_game(input):
     options = input.get('options', {})
@@ -33,5 +33,5 @@ def construct_game(input):
         game = RandomGames.uniform_symmetric_game(**options)
         RandomGames.rescale_payoffs(game)
     elif input['type'] == 'file':
-        game = Reductions.deviation_preserving_reduction(GameIO.read(input['file']), {'All': 6})
+        game = GameIO.read(input['file'])
     return game

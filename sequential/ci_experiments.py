@@ -27,6 +27,7 @@ def single_test(game, noise_model, samples_per_step, delta, alpha, best_effort="
         matrix.addObservations(profile, {r: [PayoffData(s, profile[r][s], data_set) for s, data_set in s_hash.items()]
                                          for r, s_hash in old_matrix.profile_dict[profile].items()})
     while evaluator.continue_sampling(matrix) and count < 2000:
+        print count
         if count == 1000:
             data["early_decision"] = evaluator.get_decision(matrix, candidate)
         for prof in target_set:
@@ -51,6 +52,7 @@ def main():
         for i in range(input['num_games']):
             print i
             base_game = yaml_builder.construct_game(input['game'])
+            print 'game built'
             data = single_test(base_game, noise_model, input['samples_per_step'], input['delta'], input['alpha'], input['best_effort'])
             f.write(GameIO.to_JSON_str(data, indent=None))
             if i == input['num_games']-1:
