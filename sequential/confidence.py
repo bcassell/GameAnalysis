@@ -2,7 +2,7 @@ import Bootstrap
 import Regret
 
 class BootstrapConfidenceInterval:
-    def __init__(self, bootstrap_method=Bootstrap.bootstrap):
+    def __init__(self, bootstrap_method=Bootstrap.double_bootstrap):
         self.bootstrap_method = bootstrap_method
 
     def one_sided_interval(self, matrix, profile, alpha=0.95):

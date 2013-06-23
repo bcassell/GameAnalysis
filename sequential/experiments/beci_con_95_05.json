@@ -1,0 +1,1 @@
+{"best_effort":"true","num_games":100,"delta":0.05,"alpha":0.95,"stdevs":[0.1,1.0,10.0,100.0],"game":{"type":"congestion","options":{"N":5,"facilities":3,"required":1}},"samples_per_step":5,"noise_model":{"type":"gaussian","options":{"modes":1,"spread_mult":2}}}

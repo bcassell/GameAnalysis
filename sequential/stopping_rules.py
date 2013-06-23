@@ -43,14 +43,18 @@ class EquilibriumCompareEvaluator:
         decision = False
         equilibria = []
         all_eq = []
+        print decision
+        print 'comparing old equilibria'
         for old_eq in self.old_equilibria:
             new_eq = Nash.replicator_dynamics(game, old_eq, self.iters, self.converge_threshold)
             decision = decision or linalg.norm(new_eq-old_eq, 2) > self.compare_threshold
+            print decision
             distances = map(lambda e: linalg.norm(e-new_eq, 2), equilibria)
             if Regret.regret(game, new_eq) <= self.regret_threshold and \
                     all([d >= self.dist_threshold for d in distances]):
                 equilibria.append(new_eq)
             all_eq.append(new_eq)
+        print 'testing for new equilibria'
         for m in game.biasedMixtures() + [game.uniformMixture()] + \
                 [game.randomMixture() for __ in range(self.random_restarts)]:
             eq = Nash.replicator_dynamics(game, m, self.iters, self.converge_threshold)
@@ -59,12 +63,18 @@ class EquilibriumCompareEvaluator:
                     all([d >= self.dist_threshold for d in distances]):
                 equilibria.append(eq)
                 decision = True
+                print decision
             all_eq.append(eq)
+        print 'testing that some equilibria were found'
         if len(equilibria) == 0:
             decision = True
+            print decision
             self.old_equilibria = [min(all_eq, key=lambda e: Regret.regret(game, e))]
         else:
+            if len(self.old_equilibria) == 0:
+                decision = True
             self.old_equilibria = equilibria
+        print 'Final:', decision
         return decision
     
     def equilibria(self):
