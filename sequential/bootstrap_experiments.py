@@ -27,7 +27,7 @@ def add_noise_sequentially(game, model, evaluator, samples_per_step):
 
 def main():
     parser = ArgumentParser(description='Sequential Bootstrap Experiments')
-    parser.add_argument('input_file', metavar='input_file', help='a yaml file specifying the required details')
+    parser.add_argument('input_file', metavar='input_file', help='a json file specifying the required details')
     parser.add_argument('output_file', metavar='output_file', help='output json suitable for use with the plotting script')
     args = parser.parse_args()
     input = json.loads(open(args.input_file).read())

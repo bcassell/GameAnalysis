@@ -13,4 +13,4 @@
 module load python
 cd /nfs/wellman_ls/egtaonline/GameAnalysis
 export PYTHONPATH=.:$PYTHONPATH
-python sequential/ci_experiments.py sequential/experiments/beci_cred_net_95_05_50.json sequential/experiments/beci_cred_net_95_05_50-${PBS_ARRAYID}-5000.json
+python sequential/ci_experiments.py sequential/experiments/beci_cred_net_95_05_50_agg.json sequential/experiments/beci_cred_net_95_05_50_agg-${PBS_ARRAYID}-5000.json

@@ -64,27 +64,28 @@ def generate_percentiles(data, bucket_size):
 	bucket_width = resample_count / num_buckets
 	percentiles = {v:{s:np.zeros(num_buckets + 2) for s in subsamples} for v \
 					in variances}
+	new_data = []
 	for d in data:
 		for var in variances:
 			for sam in subsamples:
 				for eq_data in d[str(var)][str(sam)]:
 					eq = np.array(eq_data['profile'])
-					regr = eq_data['statistic']
+					new_data.append(eq_data['statistic'])
 					regr_dstr = sorted(eq_data["bootstrap"])
 					regr_pct = bisect(list(regr_dstr[::int(bucket_width)]) + \
-										[regr_dstr[-1]], regr)
+										[regr_dstr[-1]], new_data[-1])
 					percentiles[var][sam][regr_pct:] += 1.
-	return percentiles
+	return percentiles, new_data
 
 
-def plot_percentiles(percentiles, bucket_size, out_file, sample_counts=None):
+def plot_percentiles(percentiles, bucket_size, out_file, data, sample_counts=None):
 	pp = PdfPages(out_file)
 	variances = sorted(percentiles)
 	subsamples = sorted(percentiles[variances[0]])
 	x_axis_points = np.arange(0, 101, 100*bucket_size)
 	for i,v in enumerate(variances):
 		plt.figure(i)
-		plt.xlabel("bootstrap regret distribution percentile")
+		plt.xlabel("bootstrap regret distribution percentile, mean regret =" + str(np.average(data)))
 		plt.ylabel("cumulative fraction of true game regrets")
 		plt.title("$\sigma \\sim$" +str(v))
 		plt.axis([0, 100, 0, 1])
@@ -180,7 +181,7 @@ def generate_quantiles(data, bucket_size):
 			for i in np.arange(bucket_size,1,bucket_size):
 				quantiles[var][sam].append(sam_dsts[var][sam][int(i * \
 												len(sam_dsts[var][sam]))])
-	return quantiles
+	return quantiles, true_dst
 
 
 def plot_quantiles(quantiles, bucket_size, out_file):
@@ -193,7 +194,7 @@ def plot_quantiles(quantiles, bucket_size, out_file):
 		plt.figure(i)
 		plt.xlabel("true regret distribution")
 		plt.ylabel("bootstrap regret distribution")
-		plt.title("$\sigma \\sim$" +str(v))
+		plt.title("$\sigma \\sim$" +str(v) + ", Avg Regret = " + str(np.average(data)))
 		for s in subsamples:
 			plt.plot(quantiles[0], quantiles[v][s], label=str(s) + " samples")
 		plt.legend(loc="lower right", prop={'size':6})
@@ -204,9 +205,9 @@ def plot_quantiles(quantiles, bucket_size, out_file):
 if __name__ == "__main__":
 	data, args = parse_input()
 	if args.mode == "pct":
-		percentiles = generate_percentiles(data, args.bucket)
+		percentiles, new_data = generate_percentiles(data, args.bucket)
 		if "sample_count" in data[0].values()[0].values()[0][0]:
-			plot_percentiles(percentiles, args.bucket, args.out_file, 
+			plot_percentiles(percentiles, args.bucket, args.out_file, new_data,
 							{var: np.mean([x["sample_count"] for d in data for x in d[var]["0"]]) for var in data[0].keys()})
 		else:
 			plot_percentiles(percentiles, args.bucket, args.out_file)
