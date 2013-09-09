@@ -1,6 +1,6 @@
 sequential/experiments/data
-sequential/data
-sequential/experiments
+sequential/data/*
+sequential/experiments/*
 results/*
 
 
