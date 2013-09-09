@@ -1,1 +1,0 @@
-{"best_effort":"true","num_games":50,"delta":0.2,"alpha":0.95,"stdevs":[0.0],"game":{"type":"file","file":"sequential/data/CN_agg20_DPR.json"},"samples_per_step":50,"noise_model":{"type":"file","file":"sequential/data/CN_agg20_DPR.json"}}
