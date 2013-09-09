@@ -1,7 +1,7 @@
 sequential/experiments/data
 sequential/data
 sequential/experiments
-results
+results/*
 
 
 .DS_Store
