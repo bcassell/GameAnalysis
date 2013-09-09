@@ -1,7 +1,7 @@
 sequential/experiments/data
-sequential/data/*
-sequential/experiments/*
-results/*
+sequential/data
+sequential/experiments
+results
 
 
 .DS_Store
