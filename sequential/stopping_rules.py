@@ -95,14 +95,22 @@ class EquilibriumConfidenceEvaluator:
         if matrix.profile_dict == {}:
             return True
         game = matrix.toGame()
+        temp_eq = []
         decision = True
+        count = 0
         for m in game.biasedMixtures() + [game.uniformMixture()] + \
                 [game.randomMixture() for __ in range(self.random_restarts)]:
             eq = Nash.replicator_dynamics(game, m, self.iters, self.converge_threshold)
-            confidence_interval = self.ci_calculator.one_sided_interval(matrix, eq, self.alpha)
-            if confidence_interval < self.delta:
-                self.eq.append(eq)
-                decision = False
+            distances = map(lambda e: linalg.norm(eq-e, 2), temp_eq)
+            if all([d >= 0.005 for d in distances]):
+                count += 1
+                print count
+                temp_eq.append(eq)
+                confidence_interval = self.ci_calculator.one_sided_interval(matrix, eq, self.alpha)
+                print confidence_interval
+                if confidence_interval < self.delta:
+                    self.eq.append(eq)
+                    decision = False
         return decision
     
     def equilibria(self):

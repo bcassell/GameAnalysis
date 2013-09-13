@@ -23,12 +23,20 @@ class MultimodalNormalNoise:
 class SimulationBasedGame:
     def __init__(self, sample_game):
         self.sample_game = sample_game
+        self.indexes = {p: range(sample_game.max_samples) for p in sample_game.knownProfiles()}
 
     def get_observations(self, profile, indexes):
         return {r: [PayoffData(s, count, [self.sample_game.getPayoffData(profile, r, s)[x] for x in indexes])
                     for s, count in s_hash.items()] for r, s_hash in profile.items()}
     
     def generate_samples(self, game, profile, sample_count):
-        indexes = rand.random_integers(0, game.max_samples-1, size=sample_count)
-        return self.get_observations(profile, indexes)
+        index_list = self.indexes[profile]
+        obs_indexes = []
+        if sample_count < len(index_list):
+            count = sample_count
+        else:
+            count = len(index_list)
+        for __ in range(count):
+            obs_indexes.append(index_list.pop(rand.randint(len(index_list))))
+        return self.get_observations(profile, obs_indexes)
     

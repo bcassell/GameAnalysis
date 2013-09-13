@@ -19,7 +19,7 @@ def add_noise_sequentially(game, model, evaluator, samples_per_step):
     """
     matrix = ObservationMatrix()
     count = 0
-    while evaluator.continue_sampling(matrix) and count < 1000:
+    while evaluator.continue_sampling(matrix) and count < game.max_samples:
         for prof in game.knownProfiles():
             matrix.addObservations(prof, model.generate_samples(game, prof, samples_per_step))
         count += samples_per_step
