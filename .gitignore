@@ -1,6 +1,7 @@
 *.json
 *.yaml
 
+sequential/experiments/*.o*
 results
 
 .DS_Store

@@ -1,7 +1,7 @@
 import numpy as np
 
 from itertools import product, combinations_with_replacement as CwR
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from string import join
 from random import choice
 
@@ -359,6 +359,24 @@ class Game(dict):
 					self.getPayoff(prof, role, strat)) for strat in \
 					prof[role]] for role in prof})
 		return game_dict
+
+	def to_asymmetric_game(self):
+		"""
+		Only works if game is fully symmetric
+		"""
+		assert is_symmetric(self) == True
+		role_name = self.roles[0]
+		roles = ["p"+str(i) for i in range(self.players[role_name])]
+		profiles = product(*[[(r,s) for s in self.strategies[role_name]] for r in roles])
+		payoff_data = [] 
+		for profile in profiles:
+			d = defaultdict(int)
+			for role in profile:
+				d[role[1]] += 1
+			equivalent_profile = Profile({role_name: d})
+			payoff_data.append({role[0]: [PayoffData(role[1], 1, self.getPayoff(equivalent_profile, role_name, role[1]))] for role in profile})
+		game = Game(roles, {role: 1 for role in roles}, {role: self.strategies[role_name] for role in roles}, payoff_data)
+		return game
 
 
 def is_pure_profile(prof):

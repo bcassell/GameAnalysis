@@ -1,0 +1,16 @@
+#!/bin/sh
+#PBS -S /bin/sh
+#PBS -N cn_95_2_100
+#PBS -A wellman_flux
+#PBS -q flux
+#PBS -l nodes=1,pmem=2000mb,walltime=24:00:00,qos=flux
+#PBS -t 1-20
+#PBS -M bcassell@umich.edu
+#PBS -m ae
+#PBS -j oe
+#PBS -V
+
+module load python
+cd /nfs/wellman_ls/egtaonline/GameAnalysis
+export PYTHONPATH=.:$PYTHONPATH
+python sequential/ci_experiments.py sequential/experiments/beci_cred_net_95_2_100.json sequential/experiments/beci_cred_net_95_2_100-${PBS_ARRAYID}.json

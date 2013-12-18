@@ -11,7 +11,6 @@ from bisect import bisect
 from numpy.random import uniform as U, normal, multivariate_normal, beta, gumbel
 from random import choice
 from numpy import array, arange, zeros, fill_diagonal, cumsum
-from sys import argv
 
 
 def __make_asymmetric_game(N, S):
@@ -55,15 +54,15 @@ def covariant_game(N, S, mean_func=lambda:0, var=1, covar_func=partial(U,0,1)):
 	"""
 	Payoff values for each profile drawn according to multivariate normal.
 
-	The multivariate normal for each profile has a constant mean-vector with 
-	value drawn from mean_func, constant variance=var, and equal covariance 
+	The multivariate normal for each profile has a constant mean-vector with
+	value drawn from mean_func, constant variance=var, and equal covariance
 	between all pairs of players, drawn from covar_func.
 
 	N: number of players
 	S: number of strategies
 	mean_func: distribution from which mean payoff for each profile is drawn
 	var: diagonal entries of covariance matrix
-	covar_func: distribution from which the value of the off-diagonal 
+	covar_func: distribution from which the value of the off-diagonal
 				covariance matrix entries for each profile is drawn
 
 	Both mean_func and covar_func should be numpy-style random number generators
@@ -80,7 +79,7 @@ def covariant_game(N, S, mean_func=lambda:0, var=1, covar_func=partial(U,0,1)):
 		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, payoffs[i])] \
 				for i,r in enumerate(g.roles)})
 	return g
-	
+
 
 def uniform_zero_sum_game(S, min_val=-1, max_val=1):
 	"""
@@ -124,7 +123,7 @@ def sym_2p2s_game(a=0, b=1, c=2, d=3, min_val=-1, max_val=1):
 	Create a symmetric 2-player 2-strategy game of the specified form.
 
 	Four payoff values get drawn from U(min_val, max_val), and then are assigned
-	to profiles in order from smallest to largest according to the order 
+	to profiles in order from smallest to largest according to the order
 	parameters as follows:
 
 	   | s0  | s1  |
@@ -132,7 +131,7 @@ def sym_2p2s_game(a=0, b=1, c=2, d=3, min_val=-1, max_val=1):
 	s0 | a,a | b,c |
 	s1 | c,b | d,d |
 	---|-----|-----|
-	
+
 	So a=2,b=0,c=3,d=1 gives a prisoners' dilemma; a=0,b=3,c=1,d=2 gives a game
 	of chicken.
 	"""
@@ -149,8 +148,8 @@ def congestion_game(N, facilities, required):
 	"""
 	Generates random congestion games with N players and nCr(f,r) strategies.
 
-	Congestion games are symmetric, so all players belong to role All. Each 
-	strategy is a subset of size #required among the size #facilities set of 
+	Congestion games are symmetric, so all players belong to role All. Each
+	strategy is a subset of size #required among the size #facilities set of
 	available facilities. Payoffs for each strategy are summed over facilities.
 	Each facility's payoff consists of three components:
 
@@ -231,7 +230,7 @@ def polymatrix_game(N, S, matrix_game=partial(independent_game,2)):
 
 	N: number of players
 	S: number of strategies
-	matrix_game: a function of one argument (S) that returns 2-player, 
+	matrix_game: a function of one argument (S) that returns 2-player,
 					S-strategy games.
 	"""
 	g = __make_asymmetric_game(N, S)
@@ -268,7 +267,7 @@ game_functions = filter(lambda k: k.endswith("game") and not \
 def add_noise(game, model, spread, samples):
 	"""
 	Generate sample game with random noise added to each payoff.
-	
+
 	game: a RSG.Game or RSG.SampleGame
 	model: a 2-parameter function that generates mean-zero noise
 	spread, samples: the parameters passed to the noise function
@@ -284,12 +283,12 @@ def gaussian_mixture_noise(max_stdev, samples, modes=2, spread_mult=2):
 	"""
 	Generate Gaussian mixture noise to add to one payoff in a game.
 
-	max_stdev: maximum standard deviation for the mixed distributions (also 
+	max_stdev: maximum standard deviation for the mixed distributions (also
 				affects how widely the mixed distributions are spaced)
 	samples: numer of samples to take of every profile
 	modes: number of Gaussians to mix
 	spread_mult: multiplier for the spread of the Gaussians. Distance between
-				the mean and the nearest distribution is drawn from 
+				the mean and the nearest distribution is drawn from
 				N(0,max_stdev*spread_mult).
 	"""
 	multipliers = arange(float(modes)) - float(modes-1)/2
@@ -307,15 +306,15 @@ def nonzero_gaussian_noise(max_stdev, samples, prob_pos=0.5, spread_mult=1):
 	"""
 	Generate Noise from a normal distribution centered up to one stdev from 0.
 
-	With prob_pos=0.5, this implements the previous buggy output of 
+	With prob_pos=0.5, this implements the previous buggy output of
 	bimodal_noise.
 
-	max_stdev: maximum standard deviation for the mixed distributions (also 
+	max_stdev: maximum standard deviation for the mixed distributions (also
 				affects how widely the mixed distributions are spaced)
 	samples: numer of samples to take of every profile
 	prob_pos: the probability that the noise mean for any payoff will be >0.
 	spread_mult: multiplier for the spread of the Gaussians. Distance between
-				the mean and the mean of the distribution is drawn from 
+				the mean and the mean of the distribution is drawn from
 				N(0,max_stdev*spread_mult).
 	"""
 	offset = normal(0, max_stdev)*(1 if U(0,1) < prob_pos else -1)*spread_mult
@@ -401,8 +400,8 @@ def parse_args():
 			help="Arguments to be passed to the noise function.")
 	parser.add_argument("-game_args", nargs="*", default=[], \
 			help="Additional arguments for game generator function.")
-	assert "-input" not in argv, "no input JSON required"
-	argv = argv[:3] + ["-input", None] + argv[3:]
+	assert "-input" not in IO.sys.argv, "no input JSON required"
+	IO.sys.argv = IO.sys.argv[:3] + ["-input", None] + IO.sys.argv[3:]
 	return parser.parse_args()
 
 
@@ -410,37 +409,35 @@ def main():
 	args = parse_args()
 
 	if args.type == "uZS":
-		game_func = uniform_zero_sum
+		game_func = uniform_zero_sum_game
 		assert len(args.game_args) == 1, "game_args must specify strategy count"
-		game_args = map(int, args.game_args)
 	elif args.type == "uSym":
-		game_func = uniform_symmetric
+		game_func = uniform_symmetric_game
 		assert len(args.game_args) == 2, "game_args must specify player and "+\
 									"strategy counts"
 	elif args.type == "CG":
-		game_func = congestion
+		game_func = congestion_game
 		assert len(args.game_args) == 3, "game_args must specify player, "+\
 									"facility, and required facility counts"
-		game_args = map(int, args.game_args)
 	elif args.type == "LEG":
-		game_func = local_effect
+		game_func = local_effect_game
 		assert len(args.game_args) == 2, "game_args must specify player and "+\
 									"strategy counts"
-		game_args = map(int, args.game_args)
-	
+	game_args = map(int, args.game_args)
+
 	games = [game_func(*game_args) for __ in range(args.count)]
 
 	if args.noise == "normal":
 		assert len(args.noise_args) == 2, "noise_args must specify stdev "+\
 											"and sample count"
 		noise_args = [float(args.noise_args[0]), int(args.noise_args[1])]
-		games = map(lambda g: normal_noise(g, *noise_args), games)	
+		games = map(lambda g: normal_noise(g, *noise_args), games)
 	elif args.noise == "gauss_mix":
 		assert len(args.noise_args) == 3, "noise_args must specify max "+\
 									"stdev, sample count, and number of modes"
 		noise_args = [float(args.noise_args[0]), int(args.noise_args[1]), \
 						int(args.noise_args[2])]
-		games = map(lambda g: gaussian_mixture_noise(g, *noise_args), games)	
+		games = map(lambda g: gaussian_mixture_noise(g, *noise_args), games)
 
 	if len(games) == 1:
 		print IO.to_JSON_str(games[0])
